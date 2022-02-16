@@ -1,0 +1,6 @@
+VIRTUALENV_ROOT=`pwd`
+export VIRTUAL_ENV="`basename $VIRTUALENV_ROOT`"
+export PATH=$VIRTUALENV_ROOT/bin:$VIRTUALENV_ROOT/node/bin:$PATH
+export N_PREFIX=$VIRTUALENV_ROOT/node
+VIRTUALENV_ROOT_DISPLAY="`echo $VIRTUALENV_ROOT | sed \"s%^$HOME/%%" | sed 's/\//·/g'`"
+
