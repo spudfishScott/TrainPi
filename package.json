@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "express": "^4.17.3",
     "node-fetch": "2",
     "serialport": "^9.2.8"
   }

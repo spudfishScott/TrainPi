@@ -1,8 +1,7 @@
-'use strict' 
+'use strict'
 
 const Serial = require('serialport');
 const fetch = require('node-fetch');
-const fs = require('fs');
 
 const API_URL = 'https://api-v3.mbta.com/predictions?filter[stop]=place-portr&filter[route]=CR-Fitchburg';
 const INBOUND_THRESHHOLD = 20000;
@@ -56,7 +55,7 @@ async function check_loop() {
         console.log(`The window is ${window}`);
         if (window < INBOUND_THRESHHOLD) {
           // send the train inbound!
-          port.write('i');
+          port && port.write('i');
           train_direction = 0;
           console.log(`Sending the train INBOUND`);
         }
@@ -65,31 +64,25 @@ async function check_loop() {
         console.log(`The window is ${window}`);
         if (window > OUTBOUND_THRESHHOLD) {
           // send the train outbound!
-          port.write('o');
+          port && port.write('o');
           train_direction = 1;
           console.log(`Sending the train OUTBOUND`);
         }
       }
     }
   }
-
-  fs.access(INBOUND_SEMAPHORE, fs.F_OK, (err) => {
-    if (!err) {
-      console.log(`Sending the train INBOUND`);
-      port.write('i'); // if inbound semaphore detected, send the train inbound
-      fs.unlinkSync(INBOUND_SEMAPHORE);
-      train_direction = 0;
-    }
-  });
-
-  fs.access(OUTBOUND_SEMAPHORE, fs.F_OK, (err) => {
-    if (!err) {
-      console.log(`Sending the train OUTBOUND`);
-      port.write('o'); // if outbound semaphore detected, send the train outbound
-      fs.unlinkSync(OUTBOUND_SEMAPHORE);
-      train_direction = 1;
-    }
-  });
 }
 
-module.exports = { init };
+function set_direction(direction) {
+  if (direction === 'i' || direction === 'o') {
+    console.log(`Sending the train ${(direction === 'o') ? 'OUTBOUND' : 'INBOUND'}`);
+    port && port.write(direction);
+    train_direction = (direction === 'o' ? 1 : 0);
+  }
+}
+
+function get_direction() {
+  return train_direction;
+}
+
+module.exports = { init, get_direction, set_direction };
