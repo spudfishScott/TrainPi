@@ -37,8 +37,10 @@ class WebServer {
     });
 
     app.get('/current', async (req, res) => {
-      console.log(`Got ${this.TrainController.get_direction()} from controller.`)
-      res.end(JSON.stringify(this.TrainController.get_direction()));
+      console.log(`Got ${this.TrainController.get_direction()} from controller.`);
+      const status = {direction: this.TrainController.get_direction()};
+      status.prediction = getFormattedTime(this.TrainController.get_prediction());
+      res.end(JSON.stringify(status));
     })
 
     let server = http.createServer(app);
@@ -49,5 +51,29 @@ class WebServer {
   }
 }
 
+function getFormattedTime(milliseconds) {
+  if (!Number.isInteger(milliseconds)) {
+    return '';
+  }
+
+  let seconds = Math.round((milliseconds) / 1000);
+  const hours = Math.floor(seconds / 3600);
+  seconds %= 3600;
+  const minutes = Math.floor(seconds / 60);
+  seconds %= 60;
+
+  const formattedTime = [];
+  if (hours) {
+    formattedTime.push(`${hours}h`);
+  }
+  if (minutes) {
+    formattedTime.push(`${minutes}m`);
+  }
+  if (seconds) {
+    formattedTime.push(`${seconds}s`);
+  }
+
+  return formattedTime.join('') || '0s';
+}
 
 module.exports = WebServer;
