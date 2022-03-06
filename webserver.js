@@ -40,6 +40,7 @@ class WebServer {
       console.log(`Got ${this.TrainController.get_direction()} from controller.`);
       const status = {direction: this.TrainController.get_direction()};
       status.prediction = getFormattedTime(this.TrainController.get_prediction());
+      status.vibration = this.TrainController.get_vibration();
       res.end(JSON.stringify(status));
     })
 

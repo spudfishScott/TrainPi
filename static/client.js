@@ -10,17 +10,17 @@ async function setDirection(filename) {
 }
 
 async function showStatus() {
-  const result = document.getElementById('direction');
   const current = await fetch(new Request('/current'));
   const response = await current.json();
 
   const direction = (response.direction === 0);
-  result.innerText = (direction) ? 'Inbound' : 'Outbound';
+  document.getElementById('direction').innerText = (direction) ? 'Inbound' : 'Outbound';
   document.getElementById('outbound').disabled = !direction;
   document.getElementById('inbound').disabled = direction;
 
-  const pred_result = document.getElementById('prediction');
-  pred_result.innerText = response.prediction && `Next train in ${response.prediction}`;
+  document.getElementById('prediction').innerText = response.prediction && `Next train in ${response.prediction}`;
+
+  document.getElementById('vibration').innerText = (response.vibration) ? `VIBRATION!!!` : '';
 }
 
 window.client.setDirection = setDirection;

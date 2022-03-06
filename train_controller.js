@@ -119,4 +119,8 @@ function get_prediction() {
   return next_window && Math.abs(next_window);
 }
 
-module.exports = { init, get_direction, set_direction, get_prediction };
+function get_vibration() {
+  return vibration_detected;
+}
+
+module.exports = { init, get_direction, set_direction, get_prediction, get_vibration };
