@@ -2,7 +2,7 @@
 
 window.client = window.client || {};
 
-let intID = window.setInterval(showStatus, 15000);
+let intID = window.setInterval(showStatus, 2000);
 showStatus();
 
 async function setDirection(filename) {
@@ -14,7 +14,7 @@ async function showStatus() {
   const response = await current.json();
 
   const direction = (response.direction === 0);
-  document.getElementById('direction').innerText = (direction) ? 'Inbound' : 'Outbound';
+  document.getElementById('direction').innerText = (direction) ? 'In Town' : 'Out of Town';
   document.getElementById('outbound').disabled = !direction;
   document.getElementById('inbound').disabled = direction;
 

@@ -19,7 +19,7 @@ class WebServer {
     this.TrainController = controller;
 
     app.use((req, res, next) => {
-      log.log(req.method, req.url);
+      log.log(req.method, req.url, req.headers['x-forwarded-for'] || req.connection.remoteAddress);
       next();
     });
 
@@ -27,7 +27,7 @@ class WebServer {
     app.use(bodyParser.urlencoded({ extended: true }));
 
     app.get('/set/:direction', async (req, res) => {
-      if (req.params.direction) {
+      if (req.params.direction === 'o' || req.params.direction === 'i') {
         log.log(`Sending direction: ${req.params.direction}`);
         this.TrainController.set_direction(req.params.direction);
         res.end();
