@@ -4,7 +4,6 @@ const Serial = require('serialport');
 const fetch = require('node-fetch');
 const Gpio = require('onoff').Gpio;
 
-
 const API_URL = 'https://api-v3.mbta.com/predictions?filter[stop]=place-portr&filter[route]=CR-Fitchburg';
 const INBOUND_THRESHHOLD = 10000;
 const OUTBOUND_THRESHHOLD = 55000;
@@ -14,9 +13,6 @@ const ARDUINO_VENDOR_ID = 2341;
 const ARDUINO_BAUD_RATE = 115200;
 const VIBRATION_SENSOR_INPUT = 4;
 const VIBRATION_IGNORE_TIME = 60000;
-
-const INBOUND_SEMAPHORE = './i';
-const OUTBOUND_SEMAPHORE = './o';
 
 let train_direction;
 let port;
@@ -86,8 +82,7 @@ async function check_loop() {
     }
   }
 
-  // if train vibration detected, check to see if we have a recent prediction
-  // and if it is more than a minute away, send the train anyway
+  // if train vibration detected, check to see if we have a recent prediction and if not, send it anyway
   if (vibration_detected) {
     vibration_detected = false;
     if (!next_window) {
@@ -98,16 +93,21 @@ async function check_loop() {
 }
 
 function set_direction(direction) {
-  ignore_vibration = true;
-  vibration_detected = false;
-  const _ = setTimeout(() => {
-    ignore_vibration = false;
-    console.log(`Paying attention to vibrations again.`);
-  }, VIBRATION_IGNORE_TIME);
-  if (direction === 'i' || direction === 'o') {
-    console.log(`Sending the train ${(direction === 'o') ? 'OUTBOUND' : 'INBOUND'}. Ignoring vibrations.`);
-    port && port.write(direction);
-    train_direction = (direction === 'o' ? 1 : 0);
+  if (!ignore_vibration) { // do not send the train during the "cool-off" period - prevents the oscillation condition
+
+    ignore_vibration = true;
+    vibration_detected = false;
+
+     const _ = setTimeout(() => {
+      ignore_vibration = false;
+      console.log(`Paying attention to vibrations again.`);
+    }, VIBRATION_IGNORE_TIME);
+
+    if (direction === 'i' || direction === 'o') {
+      console.log(`Sending the train ${(direction === 'o') ? 'OUTBOUND' : 'INBOUND'}. Ignoring vibrations.`);
+      port && port.write(direction);
+      train_direction = (direction === 'o' ? 1 : 0);
+    }
   }
 }
 
