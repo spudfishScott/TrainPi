@@ -6,13 +6,13 @@ const Gpio = require('onoff').Gpio;
 
 const API_URL = 'https://api-v3.mbta.com/predictions?filter[stop]=place-portr&filter[route]=CR-Fitchburg';
 const INBOUND_THRESHHOLD = 10000;
-const OUTBOUND_THRESHHOLD = 55000;
+const OUTBOUND_THRESHHOLD = 25000;
 const PREDICTION_WINDOW_VALID = 60000;
 const QUERY_FREQUENCY = 5000;
 const ARDUINO_VENDOR_ID = 2341;
 const ARDUINO_BAUD_RATE = 115200;
 const VIBRATION_SENSOR_INPUT = 4;
-const VIBRATION_IGNORE_TIME = 60000;
+const VIBRATION_IGNORE_TIME = 75000;
 
 let train_direction;
 let port;
@@ -54,32 +54,36 @@ async function init_serial() {
 
 async function check_loop() {
   console.log(`Checking. Train direction is ${train_direction}`);
-  const response = await fetch(API_URL);
-  const predictions = await response.json();
-  next_window = null; // clear previous prediction window
-  if (predictions.data.length) {
-    console.log(`Retrieved ${predictions.data.length} predictions`);
-    const prediction = predictions.data.find(p => p.attributes.direction_id === train_direction);
-    if (prediction) {
-      console.log(`Retrieved a prediction going in the right direction: ${train_direction}, arrival time: ${prediction.attributes.arrival_time}, departure time: ${prediction.attributes.departure_time}`);
-      if (train_direction === 1) { // waiting for inbound
-        const next_prediction = new Date(prediction.attributes.arrival_time);
-        next_window = next_prediction - Date.now() - INBOUND_THRESHHOLD;
-        console.log(`The window is ${next_window}`);
-        if (next_window < 0 || (vibration_detected && Math.abs(next_window) > PREDICTION_WINDOW_VALID)) {
-          // send the train inbound!
-          set_direction('i');
-        }
-      } else { // waiting for outbound
-        const next_prediction = new Date(prediction.attributes.departure_time);
-        next_window = (Date.now() - next_prediction) - OUTBOUND_THRESHHOLD;
-        console.log(`The window is ${next_window}`);
-        if (next_window > 0 || (vibration_detected && Math.abs(next_window) > PREDICTION_WINDOW_VALID)) {
-          // send the train outbound!
-          set_direction('o');
+  try {
+    const response = await fetch(API_URL);
+    const predictions = await response.json();
+    next_window = null; // clear previous prediction window
+    if (predictions.data.length) {
+      console.log(`Retrieved ${predictions.data.length} predictions`);
+      const prediction = predictions.data.find(p => p.attributes.direction_id === train_direction);
+      if (prediction) {
+        console.log(`Retrieved a prediction going in the right direction: ${train_direction}, arrival time: ${prediction.attributes.arrival_time}, departure time: ${prediction.attributes.departure_time}`);
+        if (train_direction === 1) { // waiting for inbound
+          const next_prediction = new Date(prediction.attributes.arrival_time);
+          next_window = next_prediction - Date.now() - INBOUND_THRESHHOLD;
+          console.log(`The window is ${next_window}`);
+          if (next_window < 0 || (vibration_detected && Math.abs(next_window) > PREDICTION_WINDOW_VALID)) {
+            // send the train inbound!
+            set_direction('i');
+          }
+        } else { // waiting for outbound
+          const next_prediction = new Date(prediction.attributes.departure_time);
+          next_window = (Date.now() - next_prediction) - OUTBOUND_THRESHHOLD;
+          console.log(`The window is ${next_window}`);
+          if (next_window > 0 || (vibration_detected && Math.abs(next_window) > PREDICTION_WINDOW_VALID)) {
+            // send the train outbound!
+            set_direction('o');
+          }
         }
       }
     }
+  } catch(error) {
+    console.log(`Error fetching prediction. Ignoring. Error: ${error}`);
   }
 
   // if train vibration detected, check to see if we have a recent prediction and if not, send it anyway
